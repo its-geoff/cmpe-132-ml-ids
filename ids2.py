@@ -61,7 +61,7 @@ dt_model.fit(X_train_balanced, y_train_balanced)
 rf_model = RandomForestClassifier(n_jobs=-1)
 param_grid_rf = {
     'n_estimators': [100, 200],
-    'max_depth': [10, 20],
+    'max_depth': [40, 80],
     'min_samples_split': [2, 5],
     'min_samples_leaf': [1, 2]
 }
