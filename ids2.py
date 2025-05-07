@@ -9,7 +9,7 @@ from imblearn.over_sampling import SMOTE
 
 # Load datasets
 train_data = pd.read_csv('Train_data.csv')
-test_data = pd.read_csv('Test_data_with_labels.csv')  # Use updated test data with labels
+test_data = pd.read_csv('Test_data.csv')  # Use updated test data with labels
 
 # Preprocess Train Data
 X_train = train_data.drop('class', axis=1)
@@ -20,7 +20,7 @@ X_test = test_data.drop('class', axis=1)
 y_test = test_data['class']
 
 # One-hot encode categorical features (protocol_type, service, flag)
-categorical_columns = ['protocol_type', 'service', 'flag']
+categorical_columns = ['duration', 'protocol_type', 'service', 'flag']
 encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
 
 # Fit encoder on training data and transform both datasets
@@ -33,7 +33,7 @@ encoded_train_df = pd.DataFrame(encoded_train, columns=encoder.get_feature_names
 encoded_test_df = pd.DataFrame(encoded_test, columns=encoder.get_feature_names_out(categorical_columns))
 
 # Scale numerical features
-numerical_columns = ['duration', 'src_bytes', 'dst_bytes', 'count', 'srv_count',
+numerical_columns = ['src_bytes', 'dst_bytes', 'count', 'srv_count',
                      'serror_rate', 'srv_serror_rate', 'rerror_rate', 'srv_rerror_rate',
                      'same_srv_rate', 'diff_srv_rate', 'srv_diff_host_rate',
                      'dst_host_count', 'dst_host_srv_count', 'dst_host_same_srv_rate',
@@ -43,14 +43,14 @@ numerical_columns = ['duration', 'src_bytes', 'dst_bytes', 'count', 'srv_count',
                      'dst_host_srv_rerror_rate']
 scaler = StandardScaler()
 scaled_train = scaler.fit_transform(X_train[numerical_columns])
-scaled_test = scaler.transform(X_test[numerical_columns])
+scaled_test = scaler.fit_transform(X_test[numerical_columns])
 
 # Combine encoded categorical and scaled numerical features
 X_train_preprocessed = pd.concat([encoded_train_df, pd.DataFrame(scaled_train)], axis=1)
 X_test_preprocessed = pd.concat([encoded_test_df, pd.DataFrame(scaled_test)], axis=1)
 
 # Balance the training dataset using SMOTE
-smote = SMOTE(random_state=42)
+smote = SMOTE(random_state=42, k_neighbors=1)
 X_train_balanced, y_train_balanced = smote.fit_resample(X_train_preprocessed.values, y_train)
 
 # Train Decision Tree model
@@ -87,17 +87,20 @@ print("Best:", best_value)
 best_rf = grid_search_rf.best_estimator_
 y_pred_rf = best_rf.predict(X_test_preprocessed.values)
 
+# Check class distribution
+print("\nBaseline Calculation:")
+print(y_train.value_counts(normalize=True))  # For training set
+print(y_test.value_counts(normalize=True))   # For test set
+
 # print("\nDecision Tree Performance:")
 # print("Accuracy:", accuracy_score(y_test, y_pred_dt))
 # print("Precision:", precision_score(y_test, y_pred_dt, average='weighted', zero_division=0))
 # print("Recall:", recall_score(y_test, y_pred_dt, average='weighted', zero_division=0))
 # print("F1-Score:", f1_score(y_test, y_pred_dt, average='weighted', zero_division=0))
 
+
 print("\nRandom Forest Performance:")
 print("Accuracy:", accuracy_score(y_test, y_pred_rf))
 print("Precision:", precision_score(y_test, y_pred_rf, average='weighted', zero_division=0))
 print("Recall:", recall_score(y_test, y_pred_rf, average='weighted', zero_division=0))
 print("F1-Score:", f1_score(y_test, y_pred_rf, average='weighted', zero_division=0))
-
-# feature_importances = pd.Series(best_rf.feature_importances_, index=X_train_balanced.columns)
-# print(feature_importances.sort_values(ascending=False).head(10))
