@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -54,33 +54,50 @@ smote = SMOTE(random_state=42)
 X_train_balanced, y_train_balanced = smote.fit_resample(X_train_preprocessed.values, y_train)
 
 # Train Decision Tree model
-dt_model = DecisionTreeClassifier(random_state=42)
-dt_model.fit(X_train_balanced, y_train_balanced)
+# dt_model = DecisionTreeClassifier(random_state=42)
+# param_grid_dt = {
+#     'max_depth': [3, 5, 10, 15, None],
+#     'min_samples_split': [2, 5, 10],
+#     'min_samples_leaf': [1, 2, 4],
+#     'criterion': ['gini', 'entropy']  # Or 'log_loss' for sklearn >=1.1
+# }
+# grid_search_dt = GridSearchCV(dt_model, param_grid_dt, cv=5, scoring='accuracy')
+# grid_search_dt.fit(X_train_balanced, y_train_balanced)
 
 # Optimize Random Forest with RandomizedSearchCV
 rf_model = RandomForestClassifier(n_jobs=-1)
 param_grid_rf = {
-    'n_estimators': [100, 200],
-    'max_depth': [40, 80],
-    'min_samples_split': [2, 5],
+    'n_estimators': [100, 150],
+    'max_depth': [60, 100],
+    'min_samples_split': [4, 7],
     'min_samples_leaf': [1, 2]
 }
-random_search_rf = RandomizedSearchCV(estimator=rf_model, param_distributions=param_grid_rf,
-                                      n_iter=10, cv=3, n_jobs=-1)
-random_search_rf.fit(X_train_balanced, y_train_balanced)
+grid_search_rf = GridSearchCV(estimator=rf_model, param_grid=param_grid_rf,
+                              cv=3, n_jobs=-1)
+grid_search_rf.fit(X_train_balanced, y_train_balanced)
+
+
+best_params = grid_search_rf.best_params_
+best_value = best_params
+print("Best:", best_value)
 
 # Evaluate models on test set
-y_pred_dt = dt_model.predict(X_test_preprocessed.values)
-y_pred_rf = random_search_rf.best_estimator_.predict(X_test_preprocessed.values)
+# best_dt = grid_search_dt.best_estimator_
+# y_pred_dt = dt_search.predict(X_test_preprocessed.values)
+best_rf = grid_search_rf.best_estimator_
+y_pred_rf = best_rf.predict(X_test_preprocessed.values)
 
-print("\nDecision Tree Performance:")
-print("Accuracy:", accuracy_score(y_test, y_pred_dt))
-print("Precision:", precision_score(y_test, y_pred_dt, average='weighted', zero_division=0))
-print("Recall:", recall_score(y_test, y_pred_dt, average='weighted', zero_division=0))
-print("F1-Score:", f1_score(y_test, y_pred_dt, average='weighted', zero_division=0))
+# print("\nDecision Tree Performance:")
+# print("Accuracy:", accuracy_score(y_test, y_pred_dt))
+# print("Precision:", precision_score(y_test, y_pred_dt, average='weighted', zero_division=0))
+# print("Recall:", recall_score(y_test, y_pred_dt, average='weighted', zero_division=0))
+# print("F1-Score:", f1_score(y_test, y_pred_dt, average='weighted', zero_division=0))
 
 print("\nRandom Forest Performance:")
 print("Accuracy:", accuracy_score(y_test, y_pred_rf))
 print("Precision:", precision_score(y_test, y_pred_rf, average='weighted', zero_division=0))
 print("Recall:", recall_score(y_test, y_pred_rf, average='weighted', zero_division=0))
 print("F1-Score:", f1_score(y_test, y_pred_rf, average='weighted', zero_division=0))
+
+# feature_importances = pd.Series(best_rf.feature_importances_, index=X_train_balanced.columns)
+# print(feature_importances.sort_values(ascending=False).head(10))
