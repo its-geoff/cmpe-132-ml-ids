@@ -7,8 +7,8 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from imblearn.over_sampling import RandomOverSampler
 
 # Load data (using a small sample to avoid memory issues)
-train_data = pd.read_csv('Train_data.csv').sample(frac=0.2, random_state=42)
-test_data = pd.read_csv('Test_data.csv').sample(frac=0.2, random_state=42)
+train_data = pd.read_csv('Train_data.csv').sample(frac=0.4, random_state=42)
+test_data = pd.read_csv('Test_data.csv').sample(frac=0.4 nv, random_state=42)
 
 # Split into features and labels
 X_train = train_data.drop('class', axis=1)
@@ -53,12 +53,13 @@ y_dummy_pred = dummy.predict(X_test)
 # grid_search_dt.fit(X_train_balanced, y_train_balanced)
 
 # Optimize Random Forest with RandomizedSearchCV
-rf_model = RandomForestClassifier(n_jobs=-1)
+rf_model = RandomForestClassifier(class_weight='balanced', n_jobs=-1)
 param_grid_rf = {
-    'n_estimators': [100, 150],
-    'max_depth': [60, 100],
-    'min_samples_split': [4, 7],
-    'min_samples_leaf': [1, 2]
+    'n_estimators': [100, 200, 300],
+    'max_depth': [20, 50, 100, None],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4],
+    'bootstrap': [True, False]
 }
 grid_search_rf = RandomizedSearchCV(estimator=rf_model, param_distributions=param_grid_rf,
                               n_iter=5, cv=3, n_jobs=-1)
