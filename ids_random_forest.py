@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
+from sklearn.model_selection import RandomizedSearchCV
 
 # Column names based on the KDD dataset description
 column_names = [
@@ -50,27 +51,50 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
+# # Train Random Forest
+# clf = RandomForestClassifier(n_estimators=100, random_state=42)
+# clf.fit(X_train, y_train)
+
+# # Predict and evaluate
+# y_pred = clf.predict(X_test)
+
+# # Get precision, recall, f1-score
+# precision, recall, f1, support = precision_recall_fscore_support(y_test, y_pred, average=None, labels=clf.classes_)
+# accuracy = accuracy_score(y_test, y_pred)
+
 # Train Random Forest
-clf = RandomForestClassifier(n_estimators=100, random_state=42)
-clf.fit(X_train, y_train)
+rf = RandomForestClassifier(class_weight='balanced', random_state=42)
 
-# Predict and evaluate
-y_pred = clf.predict(X_test)
+# Define hyperparameter grid
+param_grid = {
+    'n_estimators': [100, 200],
+    'max_depth': [None, 10, 20],
+    'min_samples_split': [2, 5],
+    'min_samples_leaf': [1, 2],
+    'max_features': ['sqrt', 'log2'],
+    'bootstrap': [True, False]
+}
 
-# Get precision, recall, f1-score
-precision, recall, f1, support = precision_recall_fscore_support(y_test, y_pred, average=None, labels=clf.classes_)
+# Set up RandomizedSearchCV
+random_search = RandomizedSearchCV(
+    estimator=rf,
+    param_distributions=param_grid,
+    n_iter=20,  # Try 20 combinations
+    cv=3,
+    scoring='f1_macro',
+    n_jobs=-1,
+    random_state=42
+)
+
+random_search.fit(X_train, y_train)
+
+# Find best parameters and evaluate with test data
+best_rf = random_search.best_estimator_
+y_pred = best_rf.predict(X_test)
+
+# Metrics
 accuracy = accuracy_score(y_test, y_pred)
-
-# Print results
-for i, label in enumerate(clf.classes_):
-    print(f"Class: {label}")
-    print(f"  Accuracy:  {accuracy: .4f}")
-    print(f"  Precision: {precision[i]: .4f}")
-    print(f"  Recall:    {recall[i]: .4f}")
-    print(f"  F1-Score:  {f1[i]: .4f}")
-    print()
-
-precision, recall, f1, support = precision_recall_fscore_support(y_test, y_pred, average='macro', labels=clf.classes_)
+precision, recall, f1, support = precision_recall_fscore_support(y_test, y_pred, average='macro')
 
 print(f"Overall Accuracy:  {accuracy:.4f}")
 print(f"Overall Precision: {precision:.4f}")
