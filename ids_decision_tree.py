@@ -1,10 +1,9 @@
 import pandas as pd
-import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
-# Column names based on the KDD dataset description
+# Load dataset
 column_names = [
     "duration", "protocol_type", "service", "flag", "src_bytes", "dst_bytes", 
     "land", "wrong_fragment", "urgent", "hot", "num_failed_logins", 
@@ -18,44 +17,42 @@ column_names = [
     "dst_host_srv_diff_host_rate", "dst_host_serror_rate", 
     "dst_host_srv_serror_rate", "dst_host_rerror_rate", 
     "dst_host_srv_rerror_rate", "label", "level"
-]
+    ]
 
-# Load datasets (download the files if not already present)
+# Load training and test data
 train_data = pd.read_csv('KDDTrain+.txt', names=column_names)
 test_data = pd.read_csv('KDDTest+.txt', names=column_names)
 
-# Combine train and test for consistent encoding
-combined_df = pd.concat([train_data, test_data], axis=0)
-
 # Encode categorical features
-for col in ['protocol_type', 'service', 'flag']:
+categorical_cols = ["protocol_type", "service", "flag"]
+for col in categorical_cols:
     encoder = LabelEncoder()
-    combined_df[col] = encoder.fit_transform(combined_df[col])
+    combined = pd.concat([train_data[col], test_data[col]])
+    encoder.fit(combined)
+    train_data[col] = encoder.transform(train_data[col])
+    test_data[col] = encoder.transform(test_data[col])
 
-# Convert labels to binary classes (normal vs. attack)
-combined_df['label'] = combined_df['label'].apply(lambda x: 'normal' if x == 'normal' else 'attack')
+# Map labels to binary classification
+train_data['label'] = train_data['label'].apply(lambda x: 'normal' if x == 'normal' else 'attack')
+test_data['label'] = test_data['label'].apply(lambda x: 'normal' if x == 'normal' else 'attack')
 
-# Split combined back to train and test
-train_data = combined_df[:len(train_data)]
-test_data = combined_df[len(train_data):]
-
-# Split features and target
-X_train = train_data.drop('label', axis=1)
-y_train = train_data['label']
-X_test = test_data.drop('label', axis=1)
-y_test = test_data['label']
+# Separate features and labels
+X_train = train_data.drop("label", axis=1)
+y_train = train_data["label"]
+X_test = test_data.drop("label", axis=1)
+y_test = test_data["label"]
 
 # Feature scaling
 scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-# Train Random Forest
-clf = RandomForestClassifier(n_estimators=100, random_state=42)
-clf.fit(X_train, y_train)
+# Train Decision Tree
+clf = DecisionTreeClassifier(random_state=42)
+clf.fit(X_train_scaled, y_train)
 
 # Predict and evaluate
-y_pred = clf.predict(X_test)
+y_pred = clf.predict(X_test_scaled)
 
 # Get precision, recall, f1-score
 precision, recall, f1, support = precision_recall_fscore_support(y_test, y_pred, average=None, labels=clf.classes_)
