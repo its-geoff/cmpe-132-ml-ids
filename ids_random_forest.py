@@ -51,17 +51,6 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# # Train Random Forest
-# clf = RandomForestClassifier(n_estimators=100, random_state=42)
-# clf.fit(X_train, y_train)
-
-# # Predict and evaluate
-# y_pred = clf.predict(X_test)
-
-# # Get precision, recall, f1-score
-# precision, recall, f1, support = precision_recall_fscore_support(y_test, y_pred, average=None, labels=clf.classes_)
-# accuracy = accuracy_score(y_test, y_pred)
-
 # Train Random Forest
 rf = RandomForestClassifier(class_weight='balanced', random_state=42)
 
@@ -86,13 +75,14 @@ random_search = RandomizedSearchCV(
     random_state=42
 )
 
+# Fit the model to the data
 random_search.fit(X_train, y_train)
 
 # Find best parameters and evaluate with test data
 best_rf = random_search.best_estimator_
 y_pred = best_rf.predict(X_test)
 
-# Metrics
+# Get accuracy, precision, recall, and f1-score
 accuracy = accuracy_score(y_test, y_pred)
 precision, recall, f1, support = precision_recall_fscore_support(y_test, y_pred, average='macro')
 
