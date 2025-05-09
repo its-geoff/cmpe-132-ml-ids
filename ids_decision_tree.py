@@ -4,7 +4,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from sklearn.model_selection import RandomizedSearchCV
 
-# Load dataset
+# Column names based on the KDD dataset description
 column_names = [
     "duration", "protocol_type", "service", "flag", "src_bytes", "dst_bytes", 
     "land", "wrong_fragment", "urgent", "hot", "num_failed_logins", 

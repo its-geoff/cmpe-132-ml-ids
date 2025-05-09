@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
@@ -21,7 +20,7 @@ column_names = [
     "dst_host_srv_rerror_rate", "label", "level"
 ]
 
-# Load datasets (download the files if not already present)
+# Load training and test data
 train_data = pd.read_csv('KDDTrain+.txt', names=column_names)
 test_data = pd.read_csv('KDDTest+.txt', names=column_names)
 
@@ -29,16 +28,17 @@ test_data = pd.read_csv('KDDTest+.txt', names=column_names)
 combined_df = pd.concat([train_data, test_data], axis=0)
 
 # Encode categorical features
-for col in ['protocol_type', 'service', 'flag']:
+categorical_cols = ["protocol_type", "service", "flag"]
+for col in categorical_cols:
     encoder = LabelEncoder()
-    combined_df[col] = encoder.fit_transform(combined_df[col])
+    combined = pd.concat([train_data[col], test_data[col]])
+    encoder.fit(combined)
+    train_data[col] = encoder.transform(train_data[col])
+    test_data[col] = encoder.transform(test_data[col])
 
-# Convert labels to binary classes (normal vs. attack)
-combined_df['label'] = combined_df['label'].apply(lambda x: 'normal' if x == 'normal' else 'attack')
-
-# Split combined back to train and test
-train_data = combined_df[:len(train_data)]
-test_data = combined_df[len(train_data):]
+# Map labels to binary classification
+train_data['label'] = train_data['label'].apply(lambda x: 'normal' if x == 'normal' else 'attack')
+test_data['label'] = test_data['label'].apply(lambda x: 'normal' if x == 'normal' else 'attack')
 
 # Split features and target
 X_train = train_data.drop('label', axis=1)
