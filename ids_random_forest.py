@@ -3,6 +3,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.dummy import DummyClassifier
 
 # Column names based on the KDD dataset description
 column_names = [
@@ -51,6 +52,9 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
+# Dummy classifier for baseline
+dummy = DummyClassifier(strategy='most_frequent')
+
 # Train Random Forest
 rf = RandomForestClassifier(class_weight='balanced', random_state=42)
 
@@ -76,15 +80,27 @@ random_search = RandomizedSearchCV(
 )
 
 # Fit the model to the data
+dummy.fit(X_train, y_train)
 random_search.fit(X_train, y_train)
 
 # Find best parameters and evaluate with test data
+y_dummy_pred = dummy.predict(X_test)
 best_rf = random_search.best_estimator_
 y_pred = best_rf.predict(X_test)
 
+# Calculate dummy metrics
+d_accuracy = accuracy_score(y_test, y_dummy_pred)
+d_precision, d_recall, d_f1, _ = precision_recall_fscore_support(y_test, y_dummy_pred, average='macro', zero_division=0)
+
 # Get accuracy, precision, recall, and f1-score
 accuracy = accuracy_score(y_test, y_pred)
-precision, recall, f1, support = precision_recall_fscore_support(y_test, y_pred, average='macro')
+precision, recall, f1, support = precision_recall_fscore_support(y_test, y_pred, average='macro', zero_division=0)
+
+print(f"Dummy Accuracy:  {d_accuracy:.4f}")
+print(f"Dummy Precision: {d_precision:.4f}")
+print(f"Dummy Recall:    {d_recall:.4f}")
+print(f"Dummy F1-Score:  {d_f1:.4f}")
+print()
 
 print(f"Overall Accuracy:  {accuracy:.4f}")
 print(f"Overall Precision: {precision:.4f}")
