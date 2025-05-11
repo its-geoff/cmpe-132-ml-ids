@@ -63,8 +63,8 @@ param_grid = {
     'n_estimators': [100, 200],
     'max_depth': [10, 20],
     'min_samples_split': [2, 5],
-    'min_samples_leaf': [1, 2],
-    'max_features': ['sqrt', 'log2'],
+    'min_samples_leaf': [2, 4],
+    'max_features': [None],
     'bootstrap': [True, False]
 }
 
@@ -72,7 +72,7 @@ param_grid = {
 random_search = RandomizedSearchCV(
     estimator=rf,
     param_distributions=param_grid,
-    n_iter=20,
+    n_iter=10,
     cv=3,
     scoring='f1_macro',
     n_jobs=-1,
