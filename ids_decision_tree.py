@@ -4,7 +4,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from sklearn.model_selection import RandomizedSearchCV
 
-# Column names based on the KDD dataset description
+# Load dataset
 column_names = [
     "duration", "protocol_type", "service", "flag", "src_bytes", "dst_bytes", 
     "land", "wrong_fragment", "urgent", "hot", "num_failed_logins", 
@@ -54,7 +54,7 @@ dt = DecisionTreeClassifier(class_weight='balanced', random_state=42)
 # Define the hyperparameter grid
 param_grid = {
     'max_depth': [None, 10, 20],
-    'min_samples_split': [2, 5],
+    'min_samples_split': [2, 5, 10],
     'min_samples_leaf': [1, 2],
     'max_features': ['sqrt', 'log2']
 }
@@ -63,7 +63,7 @@ param_grid = {
 random_search = RandomizedSearchCV(
     estimator=dt,
     param_distributions=param_grid,
-    n_iter=20,  # Try 20 combinations
+    n_iter=20,
     cv=3,
     scoring='f1_macro',
     n_jobs=-1,
