@@ -21,6 +21,7 @@ Decision Tree
 
 Random Forest
 
+K-nearest neighbor (KNN)
 ## Miscellaneous Resources
 
 https://www.geeksforgeeks.org/intrusion-detection-system-using-machine-learning-algorithms/
